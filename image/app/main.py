@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 import os
 import shutil
 import uuid
+from settings import settings  # settings import
+
 
 app = FastAPI()
 
@@ -20,6 +22,7 @@ app.add_middleware(
 # 이미지 저장 경로 (여기에 NFS가 마운트되어 있을 수도 있음)
 UPLOAD_DIR = "./uploaded_images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 # 정적 파일 서빙 (이미지 접근용)
 app.mount("/static", StaticFiles(directory=UPLOAD_DIR), name="static")
@@ -40,6 +43,5 @@ async def upload_image(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
 
-    # 클라이언트가 접근할 URL 반환 (FastAPI static 경로)
-    url = f"http://localhost:8003/static/{filename}"
+    url = f"{settings.base_url}{settings.static_url_path}/{filename}"
     return {"url": url}

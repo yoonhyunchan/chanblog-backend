@@ -24,7 +24,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/api/", response_model=list[schemas.Category])
+@app.get("/api/categories", response_model=list[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):
     return crud.get_categories(db)
 
