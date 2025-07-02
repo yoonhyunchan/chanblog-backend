@@ -1,28 +1,26 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
-from . import crud, models, schemas
-from .database import SessionLocal, engine
+from . import crud, models, schemas, seed
+from .database import SessionLocal, engine, get_db, Base
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas import SlugBody
 
-models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
+    seed.init_db()
 
 @app.get("/api/categories", response_model=list[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):

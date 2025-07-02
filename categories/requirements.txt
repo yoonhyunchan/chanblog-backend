@@ -3,4 +3,4 @@ uvicorn
 sqlalchemy
 psycopg2-binary  # For PostgreSQL, or use 'sqlite' for SQLite
 pydantic
- python-dotenv
+pydantic-settings

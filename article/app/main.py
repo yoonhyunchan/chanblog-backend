@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from . import models, schemas, crud
-from .database import SessionLocal, engine, Base
+from .database import SessionLocal, engine, Base, get_db
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -14,13 +14,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-Base.metadata.create_all(bind=engine)
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
+
 
 @app.post("/api/articles", response_model=schemas.Article)
 def create_article(article: schemas.ArticleCreate, db: Session = Depends(get_db)):

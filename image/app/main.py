@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 import os
 import shutil
 import uuid
-from settings import settings  # settings import
+from .settings import settings  # settings import
 
 
 app = FastAPI()

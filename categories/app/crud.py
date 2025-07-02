@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 
+PROTECTED_CATEGORY_SLUGS = {'it', 'fashion', 'exhibition', 'must-try'}
+
 def get_categories(db: Session):
     return db.query(models.Category).all()
 
@@ -28,6 +30,8 @@ def delete_category(db: Session, slug: str):
     db_category = get_category_by_slug(db, slug)
     if not db_category:
         return False
+    if slug in PROTECTED_CATEGORY_SLUGS:
+        raise HTTPException(status_code=403, detail="Can't Delete Default Category!")
     db.delete(db_category)
     db.commit()
     return True

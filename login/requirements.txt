@@ -6,3 +6,4 @@ passlib[bcrypt]
 psycopg2-binary
 pydantic
 bcrypt
+pydantic-settings

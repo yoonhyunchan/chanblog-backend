@@ -1,18 +1,22 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
+
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from jose import jwt
+from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from fastapi.middleware.cors import CORSMiddleware
-
-from .database import SessionLocal, engine
+from .database import SessionLocal, engine, get_db
 from .models import Base, User
-from .schemas import UserLogin, Token
+from .schemas import UserLogin, Token, UserRegister, UserOut, UserUpdate
+from .seed import init_db
+from .crud import get_user_by_email, create_user, verify_password, update_user_info
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+
+SECRET_KEY = "chan-secret-key"
+ALGORITHM = "HS256"
 
 app = FastAPI()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "your-secret-key"
-ALGORITHM = "HS256"
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,13 +26,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# DB 세션 의존성
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
+    init_db()
+
 
 # JWT 토큰 생성
 def create_token(data: dict, expires_delta: timedelta | None = None):
@@ -39,31 +45,62 @@ def create_token(data: dict, expires_delta: timedelta | None = None):
 
 @app.post("/login", response_model=Token)
 def login(user_login: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == user_login.email).first()
-    if not user or not pwd_context.verify(user_login.password, user.hashed_password):
+    user = get_user_by_email(db, user_login.email)
+    if not user or not verify_password(user_login.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
     token = create_token(data={"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
 
-from fastapi import Body
-
 @app.post("/register", response_model=Token)
-def register(user: UserLogin, db: Session = Depends(get_db)):
-    # 중복 확인
-    existing = db.query(User).filter(User.email == user.email).first()
+def register(user: UserRegister, db: Session = Depends(get_db)):
+    existing = get_user_by_email(db, user.email)
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
-
-    # 비밀번호 해싱
-    hashed_pw = pwd_context.hash(user.password)
-
-    # 새 유저 생성
-    new_user = User(email=user.email, hashed_password=hashed_pw)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    # 토큰 발급
+    new_user = create_user(db, user)
     token = create_token(data={"sub": new_user.email})
     return {"access_token": token, "token_type": "bearer"}
+    
+@app.put("/user_data", response_model=UserOut)
+def update_user_data(
+    update: UserUpdate,
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if not email:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = get_user_by_email(db, email)
+    if user is None:
+        raise credentials_exception
+
+    updated_user = update_user_info(db, user, update)
+    return updated_user
+
+
+@app.get("/user_data", response_model=UserOut)
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = get_user_by_email(db, email)
+    if user is None:
+        raise credentials_exception
+    return user

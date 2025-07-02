@@ -13,7 +13,7 @@ class Article(Base):
     intro = Column(Text)
     content = Column(Text)
     category_id = Column(Integer, nullable=False)
-    date = Column(Date)
+    date = Column(Text)
     image = Column(String(300))
     tags = Column(Text)  # You can change to ARRAY or JSONB if needed
     author_name = Column(String(100))
