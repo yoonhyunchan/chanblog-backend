@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, status
-
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -50,6 +49,7 @@ def login(user_login: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_token(data={"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
+
 
 @app.post("/register", response_model=Token)
 def register(user: UserRegister, db: Session = Depends(get_db)):

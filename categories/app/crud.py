@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-
+from fastapi import HTTPException
 PROTECTED_CATEGORY_SLUGS = {'it', 'fashion', 'exhibition', 'must-try'}
 
 def get_categories(db: Session):

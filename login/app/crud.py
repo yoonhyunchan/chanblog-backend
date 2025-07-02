@@ -2,13 +2,13 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from .models import User
 from .schemas import UserRegister, UserUpdate
+from fastapi import HTTPException
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_user_by_email(db: Session, email: str) -> User:
     user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 def create_user(db: Session, user: UserRegister):
