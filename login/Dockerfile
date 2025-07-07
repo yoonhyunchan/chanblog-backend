@@ -15,7 +15,7 @@ COPY .env .env
 COPY app ./app
 
 # Expose FastAPI port
-EXPOSE 8002
+EXPOSE 5000
 
 # Start FastAPI with Uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]

@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import SessionLocal, engine, get_db
 from .models import Base, User
 from .schemas import UserLogin, Token, UserRegister, UserOut, UserUpdate
-from .seed import init_db
 from .crud import get_user_by_email, create_user, verify_password, update_user_info
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
@@ -32,7 +31,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
-    init_db()
 
 
 # JWT 토큰 생성
