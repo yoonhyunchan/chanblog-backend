@@ -7,8 +7,6 @@ from .schemas import SlugBody
 from fastapi.responses import JSONResponse
 
 
-
-
 app = FastAPI()
 
 app.add_middleware(
