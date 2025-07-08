@@ -9,6 +9,8 @@ from .models import Base, User
 from .schemas import UserLogin, Token, UserRegister, UserOut, UserUpdate
 from .crud import get_user_by_email, create_user, verify_password, update_user_info
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
+
 
 
 SECRET_KEY = "chan-secret-key"
@@ -28,11 +30,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
-@app.on_event("startup")
-def startup():
-    Base.metadata.create_all(bind=engine)
-
-
 # JWT 토큰 생성
 def create_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
@@ -40,7 +37,15 @@ def create_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-@app.post("/login", response_model=Token)
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
+
+@app.get("/health", summary="Health Check", tags=["Monitoring"])
+async def health_check():
+    return JSONResponse(content={"status": "ok"})
+
+@app.post("/auth/login", response_model=Token)
 def login(user_login: UserLogin, db: Session = Depends(get_db)):
     user = get_user_by_email(db, user_login.email)
     if not user or not verify_password(user_login.password, user.hashed_password):
@@ -49,7 +54,7 @@ def login(user_login: UserLogin, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/register", response_model=Token)
+@app.post("/auth/register", response_model=Token)
 def register(user: UserRegister, db: Session = Depends(get_db)):
     existing = get_user_by_email(db, user.email)
     if existing:
@@ -58,7 +63,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     token = create_token(data={"sub": new_user.email})
     return {"access_token": token, "token_type": "bearer"}
     
-@app.put("/user_data", response_model=UserOut)
+@app.put("/auth/user_data", response_model=UserOut)
 def update_user_data(
     update: UserUpdate,
     token: str = Depends(oauth2_scheme),
@@ -84,7 +89,7 @@ def update_user_data(
     return updated_user
 
 
-@app.get("/user_data", response_model=UserOut)
+@app.get("/auth/user_data", response_model=UserOut)
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

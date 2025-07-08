@@ -4,6 +4,8 @@ from . import crud, models, schemas, seed
 from .database import SessionLocal, engine, get_db, Base
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas import SlugBody
+from fastapi.responses import JSONResponse
+
 
 
 
@@ -22,23 +24,27 @@ def startup():
     Base.metadata.create_all(bind=engine)
     seed.init_db()
 
-@app.get("/api/categories", response_model=list[schemas.Category])
+@app.get("/health", summary="Health Check", tags=["Monitoring"])
+async def health_check():
+    return JSONResponse(content={"status": "ok"})
+
+@app.get("/categories", response_model=list[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):
     return crud.get_categories(db)
 
-@app.get("/api/categories/{slug}", response_model=schemas.Category)
+@app.get("/categories/{slug}", response_model=schemas.Category)
 def get_category(slug: str, db: Session = Depends(get_db)):
     db_category = crud.get_category_by_slug(db, slug)
     if not db_category:
         raise HTTPException(status_code=404, detail="Category not found")
     return db_category
 
-@app.post("/api/categories", response_model=schemas.Category, status_code=status.HTTP_201_CREATED)
+@app.post("/categories", response_model=schemas.Category, status_code=status.HTTP_201_CREATED)
 def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
     db_category = crud.create_category(db, category)
     return db_category
 
-@app.patch("/api/categories", response_model=schemas.Category)
+@app.patch("/categories", response_model=schemas.Category)
 def update_category(
     slug: str = Body(...),
     updates: schemas.CategoryUpdate = Body(...),
@@ -49,7 +55,7 @@ def update_category(
         raise HTTPException(status_code=404, detail="Category not found")
     return db_category
 
-@app.delete("/api/categories")
+@app.delete("/categories")
 def delete_category(body: SlugBody, db: Session = Depends(get_db)):
     ok = crud.delete_category(db, body.slug)
     if not ok:

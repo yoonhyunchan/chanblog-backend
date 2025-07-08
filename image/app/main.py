@@ -27,7 +27,11 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # 정적 파일 서빙 (이미지 접근용)
 app.mount("/static", StaticFiles(directory=UPLOAD_DIR), name="static")
 
-@app.post("/api/upload")
+@app.get("/health", summary="Health Check", tags=["Monitoring"])
+async def health_check():
+    return JSONResponse(content={"status": "ok"})
+
+@app.post("/images/upload")
 async def upload_image(file: UploadFile = File(...)):
     allowed_ext = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
     ext = os.path.splitext(file.filename)[1].lower()

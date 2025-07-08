@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: login
+  name: auth
   namespace: backend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: login
+      app: auth
   template:
     metadata:
       labels:
-        app: login
+        app: auth
     spec:
       containers:
-      - name: login
-        image: harbor.chanandy.internal/chanproject/login:latest
+      - name: auth
+        image: harbor.chanandy.internal/chanproject/auth:latest
         ports:
         - containerPort: 5000
         volumeMounts:
