@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: article
+  namespace: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: article
+  template:
+    metadata:
+      labels:
+        app: article
+    spec:
+      containers:
+      - name: article
+        image: harbor.chanandy.internal/backend/article:latest
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/.env
+          subPath: .env
+      volumes:
+      - name: config-volume
+        configMap:
+          name: dbconfig
+          items:
+          - key: .env
+            path: .env

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        image: harbor.chanandy.internal/backend/auth:latest
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/.env
+          subPath: .env
+      volumes:
+      - name: config-volume
+        configMap:
+          name: dbconfig
+          items:
+          - key: .env
+            path: .env
