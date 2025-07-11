@@ -12,9 +12,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy .env file into /app
-COPY .env .env
-
 # Copy your FastAPI app code
 COPY app ./app
 
