@@ -1,6 +1,7 @@
 <p align="center">
     <img src="https://skillicons.dev/icons?i=python,fastapi,kubernetes,docker" />
 </p>
+
 # Backend Blog - For Kubernetes Deployment 
 
 A microservices-based backend blog application deployed on Kubernetes with AWS EC2 and ALB Ingress Controller.
