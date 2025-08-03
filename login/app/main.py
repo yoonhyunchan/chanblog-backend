@@ -53,7 +53,6 @@ def login(user_login: UserLogin, db: Session = Depends(get_db)):
     token = create_token(data={"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
 
-
 @app.post("/auth/register", response_model=Token)
 def register(user: UserRegister, db: Session = Depends(get_db)):
     existing = get_user_by_email(db, user.email)
@@ -64,11 +63,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
     
 @app.put("/auth/user_data", response_model=UserOut)
-def update_user_data(
-    update: UserUpdate,
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
+def update_user_data(update: UserUpdate, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -87,7 +82,6 @@ def update_user_data(
 
     updated_user = update_user_info(db, user, update)
     return updated_user
-
 
 @app.get("/auth/user_data", response_model=UserOut)
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
